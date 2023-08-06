@@ -17,6 +17,7 @@ os.system(f'adb -s {devices} push assets-_mx-spinecharacters-shun_spr-_mxdepende
 os.system(f'adb -s {devices} push assets-_mx-spinecharacters-tsubaki_spr-_mxdependency-2023-05-30_assets_all_b7fe865c46d111737524e451b5d2ac11.bundle {address}')
 os.system(f'adb -s {devices} push prologdepengroup-assets-_mx-spinecharacters-hasumi_spr-_mxprolog-2023-05-30_assets_all_b4f65f56b4a98b1bcb7f11b5d37cf786.bundle {address}')
 os.system(f'adb -s {devices} push assets-_mx-spinelobbies-eimi_home-_mxdependency-2023-05-30_assets_all_858cd925d9c85b1ece17b8fdf1380a18.bundle {address}')
+os.system(f'adb -s {devices} push assets-_mx-spinelobbies-shun_home-_mxdependency-2023-05-30_assets_all_fd1451e4fc242ef36e47dcfab6fc25e4.bundle {lujing}')
 print("替换成功")
 
 #by Ayin/李某人
