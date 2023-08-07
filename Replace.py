@@ -1,6 +1,4 @@
-from ast import Name
 import os
-from token import NAME
 os.system('adb devices')
 print("请输入你得到序列号就是xxxx devices中xxxxx\n如果有多个请任选其一如果发现反和谐失败请输入另一个")
 devices = input()
