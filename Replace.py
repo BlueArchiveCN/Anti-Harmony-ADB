@@ -1,12 +1,67 @@
-import os
-os.system('adb devices')
-print("请输入你得到序列号就是xxxx devices中xxxxx\n如果有多个请任选其一如果发现反和谐失败请输入另一个")
-devices = input()
+import subprocess
+from pathlib import Path
+
+# 检查资源文件夹是否存在
+assets_path = 'AssetBundls'
+assert Path(assets_path).is_dir(), FileNotFoundError(f'资源文件夹{assets_path}不存在，请考虑重新获取本项目')
+
+# 检查adb是否存在且可用
+# 首先检查是否有已经开放的adb端口
+cmd = ['adb', 'devices']
+devices_list = []
+subproc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, encoding='utf8')
+out = subproc.stdout.readlines()
+for line in out:
+    if line.endswith('\tdevice'):
+        devices_list.append(line.split('\t')[0])
+
+# 如果是空的(常见于模拟器), 尝试planb: 让用户自己输入端口, 然后用adb connect直接连接
+if not devices_list:
+    print('没有已经开放的adb端口, 请手动输入端口. 请注意, 手动输入的. \n'
+          '如果是真机请检查是否已经开启了adb调试, 直接按回车将退出程序.')
+    print('如果是本地模拟器请输入端口号, 例如16543(常见于mumu模拟器12)')
+    print('如果是远程adb设备请输入ip:端口号, 例如192.168.123.123:7555')
+    _input = input()
+    if not _input:
+        exit()
+    if ':' in _input:
+        ip, port = _input.split(':')
+    else:
+        port = _input
+    if int(port) > 65535 or int(port) < 0:
+        raise ValueError('端口号不合规')
+    try:
+        ip = ip
+    except:
+        ip = '127.0.0.1'
+    cmd = ['adb', 'connect', f'{ip}:{port}']
+    subproc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, encoding='utf8')
+    assert 'connected' not in subproc.stdout.readlines(), RuntimeError(f'连接失败, 请检查设备是否开启了adb调试')
+    devices_list.append(f'{ip}:{port}')
+print(f'已经开放的adb端口有{devices_list}')
+
+# 长度大于1, 说明有多个设备, 让用户选择
+if len(devices_list) > 1:
+    print('有多个设备, 请选择其中一个, 输入序号即可, 例如输入1')
+    for i, d in enumerate(devices_list):
+        print(f'{i + 1}. {d}')
+    device = [devices_list[int(input()) - 1]]
+else:
+    device = devices_list.pop()
+
+# 获得文件列表
 address = '/storage/emulated/0/Android/data/com.RoamingStar.BlueArchive/files/AssetBundls/'
-Name = ["assets-_mx-spinecharacters-shiroko_robber_spr-_mxdependency-2023-05-30_assets_all_9e01c3f95bb37826bfed450442026264.bundle", "assets-_mx-spinecharacters-asuna_spr-_mxdependency-2023-05-30_assets_all_a3463cbb70598abab36189264165fdda.bundle", "assets-_mx-spinecharacters-eimi_spr-_mxdependency-2023-05-30_assets_all_58e8761e4dff1a7e599ae33a28362e80.bundle", "assets-_mx-spinecharacters-hibiki_spr-_mxdependency-2023-05-30_assets_all_cc942ac0a6e9ad60b92514e07764096d.bundle", "assets-_mx-spinecharacters-hina_spr-_mxdependency-2023-05-30_assets_all_406495c040bdefe4a8fa31df35501f47.bundle", "assets-_mx-spinecharacters-kotori_spr-_mxdependency-2023-05-30_assets_all_313788f05ebe6d09ab1a6b4434a53f5f.bundle", "assets-_mx-spinecharacters-shimiko_spr-_mxdependency-2023-05-30_assets_all_bc785424493fb9fd31a9ef8292995175.bundle", "assets-_mx-spinecharacters-shiroko_spr-_mxdependency-2023-05-30_assets_all_83004927ab3f8e7843ee72f26887dc36.bundle", "assets-_mx-spinecharacters-shun_spr-_mxdependency-2023-05-30_assets_all_8204ae231ade61c1df00f305eefb42f8.bundle", "assets-_mx-spinecharacters-tsubaki_spr-_mxdependency-2023-05-30_assets_all_b7fe865c46d111737524e451b5d2ac11.bundle", "assets-_mx-spinelobbies-eimi_home-_mxdependency-2023-05-30_assets_all_858cd925d9c85b1ece17b8fdf1380a18.bundle", "assets-_mx-spinelobbies-shun_home-_mxdependency-2023-05-30_assets_all_fd1451e4fc242ef36e47dcfab6fc25e4.bundle", "prologdepengroup-assets-_mx-spinecharacters-hasumi_spr-_mxprolog-2023-05-30_assets_all_b4f65f56b4a98b1bcb7f11b5d37cf786.bundle"]
-os.chdir('AssetBundls')
-for i in range(0, len(Name)):
-    os.system(f'adb -s {devices} push {Name[i]} {address}')
+bundle_list = Path(assets_path).glob('*.bundle')
+
+# 执行替换
+for f in bundle_list:
+    cmd = ['adb', '-s', device, 'push', f, address]
+    subproc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, encoding='utf8')
+    # 如果返回中没有‘pushed’则说明传输失败
+    assert 'not found' in subproc.stdout.readlines(), RuntimeError(f'文件{f}传输失败, 设备可能不存在')
+    assert 'pushed' not in subproc.stdout.readlines(), RuntimeError(f'文件{f}传输失败')
+    print(f"文件{f}替换成功")
 print("替换成功")
-#by Ayin/李某人
-#change by 360NENZ
+# by Ayin/李某人
+# change by 360NENZ
+# 2023-8-17 17:22:23 change by lucosin
